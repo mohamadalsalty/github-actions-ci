@@ -44,22 +44,22 @@ jobs:
       with:
         repository: mohamadalsalty/github-actions-cd
         token: ${{ secrets.TARGET_REPO_PAT }}
-        path: target-repo
+        path: cd-repo
 
     - name: Copy YAML files to target repository
       run: |
-        cp deployment.yaml target-repo/
+        cp deployment.yaml cd-repo/
 
     - name: Modify placeholders in YAML files with sed
       run: |
-        sed -i 's|IMAGE_NAME_WITH_TAG|${{ env.IMAGE_TAG }}|g' target-repo/deployment.yaml
-        sed -i 's|PORT|${{ env.PORT }}|g' target-repo/deployment.yaml
-        sed -i 's|DEPLOYMENT_NAME|${{ env.DEPLOYMENT_NAME }}|g' target-repo/deployment.yaml
-        sed -i 's|NAMESPACE|${{ env.NAMESPACE }}|g' target-repo/deployment.yaml
+        sed -i 's|IMAGE_NAME_WITH_TAG|${{ env.IMAGE_TAG }}|g' cd-repo/deployment.yaml
+        sed -i 's|PORT|${{ env.PORT }}|g' cd-repo/deployment.yaml
+        sed -i 's|DEPLOYMENT_NAME|${{ env.DEPLOYMENT_NAME }}|g' cd-repo/deployment.yaml
+        sed -i 's|NAMESPACE|${{ env.NAMESPACE }}|g' cd-repo/deployment.yaml
 
     - name: Commit and push changes
       run: |
-        cd target-repo
+        cd cd-repo
         git config --global user.name 'github-actions[bot]'
         git config --global user.email 'github-actions[bot]@users.noreply.github.com'
         git add .
