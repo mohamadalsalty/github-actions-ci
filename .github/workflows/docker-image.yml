@@ -12,10 +12,13 @@ jobs:
 
     runs-on: ubuntu-latest
 
+    env:
+      PORT: 80
+      DEPLOYMENT_NAME: app-example-deployment
+      NAMESPACE: app-example
+
     steps:
     - uses: actions/checkout@v4
-    - name: Build the Docker image
-      run: docker build . --file Dockerfile --tag my-image-name:$(date +%s)
 
     - name: Log in to Docker Hub
       uses: docker/login-action@v2
@@ -24,7 +27,41 @@ jobs:
         password: ${{ secrets.DOCKER_PASSWORD }}
 
     - name: Build the Docker image
-      run: docker build . --file Dockerfile --tag ${{ secrets.DOCKER_USERNAME }}/my-image-name:$(date +%s)
+      id: build-image
+      run: |
+        IMAGE_TAG=${{ secrets.DOCKER_USERNAME }}/my-image-name:$(date +%s)
+        echo "IMAGE_TAG=$IMAGE_TAG" >> $GITHUB_ENV
+        docker build . --file Dockerfile --tag $IMAGE_TAG
 
     - name: Push the Docker image
-      run: docker push ${{ secrets.DOCKER_USERNAME }}/my-image-name:$(date +%s)
+      run: docker push ${{ env.IMAGE_TAG }}
+
+    - name: Checkout the target repository
+      uses: actions/checkout@v4
+      with:
+        repository: github.com/mohamadalsalty/github-actions-cd
+        token: ${{ secrets.TARGET_REPO_PAT }}
+        path: target-repo
+
+    - name: Copy YAML files to target repository
+      run: |
+        cp deployment.yaml target-repo/
+
+    - name: Modify placeholders in YAML files with sed
+      run: |
+        sed -i 's|IMAGE_NAME_WITH_TAG|${{ env.IMAGE_TAG }}|g' target-repo/deployment.yaml
+        sed -i 's|PORT|${{ env.PORT }}|g' target-repo/deployment.yaml
+        sed -i 's|DEPLOYMENT_NAME|${{ env.DEPLOYMENT_NAME }}|g' target-repo/deployment.yaml
+        sed -i 's|NAMESPACE|${{ env.NAMESPACE }}|g' target-repo/deployment.yaml
+
+    - name: Commit and push changes
+      run: |
+        cd target-repo
+        git config --global user.name 'github-actions[bot]'
+        git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+        git add .
+        git commit -m "Update deployment files with new image tag, port, deployment name, and namespace"
+        git push origin main
+
+    - name: Print the image tag
+      run: echo "Docker image tag is ${{ env.IMAGE_TAG }}"

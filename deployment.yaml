@@ -1,0 +1,59 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  creationTimestamp: null
+  labels:
+    app: DEPLOYMENT_NAME
+  name: DEPLOYMENT_NAME
+  namespace: NAMESPACE
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: DEPLOYMENT_NAME
+  strategy:
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 1
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: DEPLOYMENT_NAME
+    spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: node-role.kubernetes.io/worker
+                operator: In
+                values:
+                - worker
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 1
+            preference:
+              matchExpressions:
+              - key: payments
+                operator: In
+                values:
+                - "true"
+      containers:
+      - image: IMAGE_NAME_WITH_TAG
+        name: httpd
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "250m"
+          limits:
+            memory: "256Mi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /
+            port: PORT
+        readinessProbe:
+          httpGet:
+            path: /
+            port: PORT
+status: {}
