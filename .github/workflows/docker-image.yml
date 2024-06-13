@@ -20,6 +20,9 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
+    - name: Build the Docker image
+      run: docker build . --file Dockerfile --tag my-image-name:$(date +%s)
+
     - name: Log in to Docker Hub
       uses: docker/login-action@v2
       with:
@@ -39,7 +42,7 @@ jobs:
     - name: Checkout the target repository
       uses: actions/checkout@v4
       with:
-        repository: github.com/mohamadalsalty/github-actions-cd
+        repository: mohamadalsalty/github-actions-cd
         token: ${{ secrets.TARGET_REPO_PAT }}
         path: target-repo
 
